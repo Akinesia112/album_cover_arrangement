@@ -28,10 +28,11 @@ Larger covers are placed first, then progressively smaller ones fill remaining g
 2. **Build Heart Mask**  
    - Create an off-screen `PGraphics maskImg`.  
    - Draw a filled heart shape using the parametric equations:  
-     \[
-       x = 16\sin^3 t,\quad
-       y = -(13\cos t - 5\cos2t - 2\cos3t - \cos4t)
-     \]  
+     $$
+     x = 16 \sin^3 t, \quad
+     y = -\bigl(13\cos t - 5\cos(2t) - 2\cos(3t) - \cos(4t)\bigr)
+     $$
+
    - White pixels in `maskImg` denote “inside” the heart.  
 
 3. **Hierarchical Cell Placement**  
