@@ -21,6 +21,21 @@ Larger covers are placed first, then progressively smaller ones fill remaining g
 
 ## Algorithm
 
+| Step | Pseudocode |
+|:----:|:-----------|
+| **1** | \( \text{for each } s \in \text{sizeOptions} \;\text{do} \) |
+| **2** | \( \text{failCount} \leftarrow 0 \) |
+| **3** | \( \textbf{while}\;\text{failCount} < \text{maxConsecutiveFails}\;\textbf{do} \) |
+| **4** | \(\quad (r_x, r_y) \leftarrow \text{randomPoint}()\) |
+| **5** | \(\quad \text{if } \neg\,\text{inMask}(r_x, r_y)\; \textbf{then}\; \text{failCount}\leftarrow\text{failCount}+1;\;\textbf{continue}\) |
+| **6** | \(\quad \text{gap} \leftarrow \text{random}(gapMin,\,gapMax)\) |
+| **7** | \(\quad \text{if } \exists\,o\in\text{cells}:\bigl(|r_x-o.x| < \tfrac{s}{2}+\tfrac{o.s}{2}+\text{gap}\;\wedge\;|r_y-o.y| < \tfrac{s}{2}+\tfrac{o.s}{2}+\text{gap}\bigr)\; \textbf{then}\; \text{failCount}++;\,\textbf{continue}\) |
+| **8** | \(\quad \text{if } \neg\,\text{cornersInMask}(r_x, r_y, s)\; \textbf{then}\; \text{failCount}++;\,\textbf{continue}\) |
+| **9** | \(\quad \text{cells.add}(\,\text{Cell}(r_x, r_y, s)\,); \;\text{failCount}\leftarrow0\) |
+| **10** | \(\textbf{end while}\) |
+| **11** | \(\textbf{end for}\) |
+
+
 1. **Load Images**  
    - Scan `ALBUM_DIR` for `.jpg`/`.png` files.  
    - Load each into an `ArrayList<PImage> albums`.  
