@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 // User adjustable parameters
-final String ALBUM_DIR = "D:/YTC/album_love/img";
+final String ALBUM_DIR = "D:/album_love/img";
 int[] sizeOptions = {150, 125, 100, 80, 50};  // album cover size from large to small
 int sampleN = 20;      // Number of target placements
 float gapMin = 0.02;      // Minimum spacing
