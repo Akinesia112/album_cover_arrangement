@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 // User adjustable parameters
-final String ALBUM_DIR = "D:/album_love/img";
-int[] sizeOptions = {150, 125, 100, 80, 50};  // album cover size from large to small
-int sampleN = 20;      // Number of target placements
-float gapMin = 0.02;      // Minimum spacing
-float gapMax = 0.025;      // Maximum spacing
+final String ALBUM_DIR = "Your Album Covers Images"; // album cover dataset folder
+int[] sizeOptions = {100, 80, 50,30};  // album cover size from large to small
+int sampleN = 30;      // Number of target placements
+float gapMin = 0.085;      // Minimum spacing
+float gapMax = 0.095;      // Maximum spacing
 
 ArrayList<PImage> albums;
 ArrayList<Cell> cells;
@@ -31,7 +31,7 @@ void draw() {
   strokeWeight(2);
   noFill();
   beginShape();
-    int steps = 800;
+    int steps = 8000;
     for (int i = 0; i < steps; i++) {
       float t = map(i, 0, steps, 0, TWO_PI);
       float x = 16 * pow(sin(t), 3);
@@ -93,35 +93,49 @@ void buildMask() {
 // and ensure that they are non-overlapping and within the heart shape.
 void defineCells() {
   cells = new ArrayList<Cell>();
-  int attempts = 0;
-  while (cells.size() < sampleN && attempts < sampleN * 50000000) {
-    attempts++;
-    float rx = random(width);
-    float ry = random(height);
-    // Must first be in the heart shape
-    if (maskImg.get(floor(rx), floor(ry)) != color(255)) continue;
-    // Calculate the maximum available half-edge distance
-    float maxRadius = Float.MAX_VALUE;
-    for (Cell o : cells) {
-      float d = dist(rx, ry, o.x, o.y) - (o.s/2 + random(gapMin, gapMax));
-      maxRadius = min(maxRadius, d);
-    }
-    // Select the largest available size
-    int chosenSize = 0;
-    for (int s : sizeOptions) {
-      if (s <= maxRadius) {
-        // Check the center + four corners 
-        if (isInsideMask(rx, ry, s)) {
-          chosenSize = s;
+  int maxConsecutiveFails = 10000000;  // Maximum number of consecutive failures per size
+
+  for (int s : sizeOptions) {
+    int failCount = 0;
+    while (failCount < maxConsecutiveFails) {
+      float rx = random(width), ry = random(height);
+      // 1) The center must be within the heart shape
+      if (maskImg.get(floor(rx), floor(ry)) != color(255)) {
+        failCount++;
+        continue;
+      }
+      // 2) A random gap
+      float gap = random(gapMin, gapMax);
+
+      // 3) Axial separation detection
+      boolean overlap = false;
+      float halfS = s / 2f;
+      for (Cell o : cells) {
+        float halfO = o.s / 2f;
+        float dx = abs(rx - o.x);
+        float dy = abs(ry - o.y);
+        float thresh = halfS + halfO + gap;
+        // If they are not separated on both the X and Y axes, they are overlapping.
+        if (dx < thresh && dy < thresh) {
+          overlap = true;
           break;
         }
       }
-    }
-    if (chosenSize > 0) {
-      cells.add(new Cell(rx, ry, chosenSize));
+      if (overlap) {
+        failCount++;
+        continue;
+      }
+      // 4) The four corners must also be within the heart shape
+      if (!isInsideMask(rx, ry, s)) {
+        failCount++;
+        continue;
+      }
+
+      // Placed successfully
+      cells.add(new Cell(rx, ry, s));
+      failCount = 0;
     }
   }
-  println("Placed " + cells.size() + " cells after " + attempts + " attempts.");
 }
 
 // Check if the center and four corners are within the heart shape
