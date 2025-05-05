@@ -12,8 +12,8 @@ Larger covers are placed first, then progressively smaller ones fill remaining g
 ## Features
 
 - **Multi-size placement**: Supports any number of cover sizes (e.g. 100, 80, 50, 30 px).
-- **Hierarchical filling**: Places largest covers first, then smaller covers iteratively fill residual space.
-- **Strict heart mask**: Ensures every cover (including its four corners) lies within a mathematically defined heart outline.
+- **Hierarchical filling**: Places the largest covers first, then smaller covers iteratively fill the residual space.
+- **Strict heart mask**: Ensures every cover center and four corners lie within a mathematically defined heart outline.
 - **Non-overlapping**: Uses axis-aligned separation checks + configurable spacing to avoid overlap.
 - **Configurable**: Easily adjust cover sizes, number of placements, canvas size, and spacing.
 
@@ -38,7 +38,7 @@ Algorithm HeartShapedCollage
   albums ← LoadAllImages(ALBUM_DIR)
   if albums.isEmpty() then exit
 
-  // 2. Build heart mask
+  // 2. Build a heart mask
   maskImg ← CreateGraphics(width, height)
   maskImg.fill(white)
   maskImg.drawHeartParametric()
@@ -48,7 +48,7 @@ Algorithm HeartShapedCollage
   for each size s in sizeOptions do
     failCount ← 0
     while failCount < maxFails do
-      // 3.1 pick random point
+      // 3.1 Pick a random point
       (rx, ry) ← (random(0,width), random(0,height))
       if maskImg.get(rx, ry) ≠ white then
         failCount ← failCount + 1
@@ -70,7 +70,7 @@ Algorithm HeartShapedCollage
         failCount ← failCount + 1
         continue
 
-      // 3.4 ensure all corners inside mask
+      // 3.4 Ensure all corners inside the mask
       if not CornersInsideMask(rx, ry, s, maskImg) then
         failCount ← failCount + 1
         continue
@@ -148,7 +148,7 @@ Algorithm HeartShapedCollage
 
 1. Clone or download this repo.  
 2. Set `ALBUM_DIR` to the path of your image folder.  
-3. Adjust parameters in the top of the sketch:
+3. Adjust parameters at the top of the sketch:
    ```
    int[] sizeOptions = {100, 80, 50,30};  // album cover size from large to small
    int sampleN = 30;      // Number of target placements
