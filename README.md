@@ -21,56 +21,70 @@ Larger covers are placed first, then progressively smaller ones fill remaining g
 
 ## Algorithm
 
-```latex
-\begin{algorithm}[H]
-\caption{Heart-Shaped Album Cover Layout}
-\label{alg:heart_collage}
-\begin{algorithmic}[1]
-\Require
-  \texttt{sizeOptions} = [$s_1, s_2, \dots, s_m$] \Comment{descending sizes}\\
-  \texttt{sampleN}, \texttt{gapMin}, \texttt{gapMax}, \texttt{maxFails}\\
-\Ensure
-  A list \texttt{Cells} of non-overlapping placements inside a heart mask
+```pseudocode
+Algorithm HeartShapedCollage
+  Input:
+    ALBUM_DIR      // folder of cover images
+    sizeOptions[]  // array of cover sizes, descending
+    sampleN        // max number of covers to place
+    gapMin, gapMax // min/max normalized spacing
+    width, height  // canvas dimensions
+    maxFails       // max consecutive failures per size
 
-\Function{Main}{}
-  \State \texttt{albums} $\gets$ \Call{LoadImages}{\texttt{ALBUM\_DIR}}
-  \State \texttt{maskImg} $\gets$ \Call{BuildHeartMask}{\texttt{canvasSize}}
-  \State \texttt{Cells}  $\gets$ \Call{PlaceCells}{\texttt{sizeOptions}, \texttt{maxFails}}
-  \State \Call{AssignImages}{\texttt{albums}, \texttt{Cells}, \texttt{sampleN}}
-  \State \Call{Render}{\texttt{maskImg}, \texttt{Cells}}
-\EndFunction
+  Output:
+    cells[]        // placed cells with positions and sizes
 
-\Function{PlaceCells}{\texttt{sizeOptions}, \texttt{maxFails}}
-  \State \texttt{Cells} $\gets$ \{\}
-  \ForAll{$s$ in \texttt{sizeOptions}}
-    \State \texttt{failCount} $\gets 0$
-    \While{\texttt{failCount} $<$ \texttt{maxFails}}
-      \State $(x,y) \gets$ \Call{RandomPoint}{canvas}
-      \If{\texttt{NotInsideHeart}($x,y$)}  
-        \State \texttt{failCount} $\pluseq 1$; \textbf{continue}
-      \EndIf
-      \State $\;gap \gets \text{Uniform}(gapMin,\;gapMax)$
-      \If{\Call{OverlapsAny}($x,y,s$, \texttt{Cells}, $gap$) \textbf{or}
-          \texttt{NotInsideHeartCorners}($x,y,s$)}
-        \State \texttt{failCount} $\pluseq 1$; \textbf{continue}
-      \EndIf
-      \State \texttt{Cells}.\Call{add}{Cell($x,y,s$)}
-      \State \texttt{failCount} $\gets 0$
-    \EndWhile
-  \EndFor
-  \State \Return \texttt{Cells}
-\EndFunction
+  // 1. Load images
+  albums ← LoadAllImages(ALBUM_DIR)
+  if albums.isEmpty() then exit
 
-\Function{OverlapsAny}{$x,y,s$, \texttt{Cells}, $gap$}
-  \ForAll{cell $c$ in \texttt{Cells}}
-    \State $dx \gets |x - c.x|,\; dy \gets |y - c.y|$
-    \State $th \gets \tfrac{s}{2} + \tfrac{c.s}{2} + gap$
-    \If{$dx < th$ \textbf{and} $dy < th$} \Return \textbf{true} \EndIf
-  \EndFor
-  \State \Return \textbf{false}
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
+  // 2. Build heart mask
+  maskImg ← CreateGraphics(width, height)
+  maskImg.fill(white)
+  maskImg.drawHeartParametric()
+
+  // 3. Hierarchical placement
+  cells ← empty list
+  for each size s in sizeOptions do
+    failCount ← 0
+    while failCount < maxFails do
+      // 3.1 pick random point
+      (rx, ry) ← (random(0,width), random(0,height))
+      if maskImg.get(rx, ry) ≠ white then
+        failCount ← failCount + 1
+        continue
+
+      // 3.2 sample gap once
+      gap ← random(gapMin, gapMax)
+      overlap ← false
+
+      // 3.3 axis-aligned overlap check
+      for each o in cells do
+        halfS ← s/2; halfO ← o.s/2
+        dx ← abs(rx - o.x); dy ← abs(ry - o.y)
+        thresh ← halfS + halfO + gap
+        if dx < thresh and dy < thresh then
+          overlap ← true
+          break
+      if overlap then
+        failCount ← failCount + 1
+        continue
+
+      // 3.4 ensure all corners inside mask
+      if not CornersInsideMask(rx, ry, s, maskImg) then
+        failCount ← failCount + 1
+        continue
+
+      // 3.5 place cell
+      cells.add(Cell(rx, ry, s))
+      failCount ← 0
+
+  // 4. Assign images to cells
+  Shuffle(albums)
+  for i from 0 to min(cells.size, sampleN)-1 do
+    cells[i].img ← albums[i]
+
+  return cells
 ```
 
 1. **Load Images**  
