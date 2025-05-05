@@ -21,20 +21,57 @@ Larger covers are placed first, then progressively smaller ones fill remaining g
 
 ## Algorithm
 
-| Step | Pseudocode |
-|:----:|:-----------|
-| **1** | \( \text{for each } s \in \text{sizeOptions} \;\text{do} \) |
-| **2** | \( \text{failCount} \leftarrow 0 \) |
-| **3** | \( \textbf{while}\;\text{failCount} < \text{maxConsecutiveFails}\;\textbf{do} \) |
-| **4** | \(\quad (r_x, r_y) \leftarrow \text{randomPoint}()\) |
-| **5** | \(\quad \text{if } \neg\,\text{inMask}(r_x, r_y)\; \textbf{then}\; \text{failCount}\leftarrow\text{failCount}+1;\;\textbf{continue}\) |
-| **6** | \(\quad \text{gap} \leftarrow \text{random}(gapMin,\,gapMax)\) |
-| **7** | \(\quad \text{if } \exists\,o\in\text{cells}:\bigl(|r_x-o.x| < \tfrac{s}{2}+\tfrac{o.s}{2}+\text{gap}\;\wedge\;|r_y-o.y| < \tfrac{s}{2}+\tfrac{o.s}{2}+\text{gap}\bigr)\; \textbf{then}\; \text{failCount}++;\,\textbf{continue}\) |
-| **8** | \(\quad \text{if } \neg\,\text{cornersInMask}(r_x, r_y, s)\; \textbf{then}\; \text{failCount}++;\,\textbf{continue}\) |
-| **9** | \(\quad \text{cells.add}(\,\text{Cell}(r_x, r_y, s)\,); \;\text{failCount}\leftarrow0\) |
-| **10** | \(\textbf{end while}\) |
-| **11** | \(\textbf{end for}\) |
+```latex
+\begin{algorithm}[H]
+\caption{Heart-Shaped Album Cover Layout}
+\label{alg:heart_collage}
+\begin{algorithmic}[1]
+\Require
+  \texttt{sizeOptions} = [$s_1, s_2, \dots, s_m$] \Comment{descending sizes}\\
+  \texttt{sampleN}, \texttt{gapMin}, \texttt{gapMax}, \texttt{maxFails}\\
+\Ensure
+  A list \texttt{Cells} of non-overlapping placements inside a heart mask
 
+\Function{Main}{}
+  \State \texttt{albums} $\gets$ \Call{LoadImages}{\texttt{ALBUM\_DIR}}
+  \State \texttt{maskImg} $\gets$ \Call{BuildHeartMask}{\texttt{canvasSize}}
+  \State \texttt{Cells}  $\gets$ \Call{PlaceCells}{\texttt{sizeOptions}, \texttt{maxFails}}
+  \State \Call{AssignImages}{\texttt{albums}, \texttt{Cells}, \texttt{sampleN}}
+  \State \Call{Render}{\texttt{maskImg}, \texttt{Cells}}
+\EndFunction
+
+\Function{PlaceCells}{\texttt{sizeOptions}, \texttt{maxFails}}
+  \State \texttt{Cells} $\gets$ \{\}
+  \ForAll{$s$ in \texttt{sizeOptions}}
+    \State \texttt{failCount} $\gets 0$
+    \While{\texttt{failCount} $<$ \texttt{maxFails}}
+      \State $(x,y) \gets$ \Call{RandomPoint}{canvas}
+      \If{\texttt{NotInsideHeart}($x,y$)}  
+        \State \texttt{failCount} $\pluseq 1$; \textbf{continue}
+      \EndIf
+      \State $\;gap \gets \text{Uniform}(gapMin,\;gapMax)$
+      \If{\Call{OverlapsAny}($x,y,s$, \texttt{Cells}, $gap$) \textbf{or}
+          \texttt{NotInsideHeartCorners}($x,y,s$)}
+        \State \texttt{failCount} $\pluseq 1$; \textbf{continue}
+      \EndIf
+      \State \texttt{Cells}.\Call{add}{Cell($x,y,s$)}
+      \State \texttt{failCount} $\gets 0$
+    \EndWhile
+  \EndFor
+  \State \Return \texttt{Cells}
+\EndFunction
+
+\Function{OverlapsAny}{$x,y,s$, \texttt{Cells}, $gap$}
+  \ForAll{cell $c$ in \texttt{Cells}}
+    \State $dx \gets |x - c.x|,\; dy \gets |y - c.y|$
+    \State $th \gets \tfrac{s}{2} + \tfrac{c.s}{2} + gap$
+    \If{$dx < th$ \textbf{and} $dy < th$} \Return \textbf{true} \EndIf
+  \EndFor
+  \State \Return \textbf{false}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+```
 
 1. **Load Images**  
    - Scan `ALBUM_DIR` for `.jpg`/`.png` files.  
